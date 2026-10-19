@@ -1,0 +1,7 @@
+.DS_Store
+# Okuma verileri ve üretilen panel (kişisel)
+/veri/
+# İndirilen derleyici, SQLite kaynağı ve üretilen paket
+/build/
+# build.sh tarafından derlenen ikili dosya
+/kobo/usr/local/okumakaydi/sqlite3
