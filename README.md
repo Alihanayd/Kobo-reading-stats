@@ -40,8 +40,8 @@ No Wi-Fi, account, cloud service or extra Python packages are needed. Records st
 Clone the repository somewhere it can stay. The Mac app points to this folder.
 
 ```sh
-git clone https://github.com/Alihanayd/kobo-reading-stats.git
-cd kobo-reading-stats
+git clone https://github.com/Alihanayd/Kobo-reading-stats.git
+cd Kobo-reading-stats
 ```
 
 ### 1. Install the logger on the Kobo
