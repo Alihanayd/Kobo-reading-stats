@@ -16,7 +16,7 @@ No Wi-Fi, account, cloud service or extra Python packages are needed. Records st
   <img alt="Dashboard showing today's reading time, weekly and monthly totals, a 30-day bar chart, a reading calendar, reading time by hour and per-book progress" src="docs/panel-light.png">
 </picture>
 
-<sub>The screenshot uses made-up data. The dashboard is currently in Turkish.</sub>
+<sub>The screenshot uses made-up data.</sub>
 
 ## What you get
 
@@ -28,6 +28,7 @@ No Wi-Fi, account, cloud service or extra Python packages are needed. Records st
 - A count of books finished since tracking started
 - A notification with today's total when you plug the Kobo in
 - A warning on the dashboard if the logger on the Kobo stops running, for example after a firmware update
+- English or Turkish, following your macOS language
 
 ## Requirements
 
@@ -82,6 +83,16 @@ python3 mac/kobo_istatistik.py --panel   # only rebuild and open the dashboard
 
 Your data is stored in `veri/okuma.db` (SQLite). Set `KOBO_ISTATISTIK_VERI` to keep it somewhere else.
 
+### Language
+
+The dashboard, notifications and console messages are in English or Turkish. By default the script follows macOS: Turkish if your first preferred language is Turkish or your region is Turkey (for example `tr-TR` or `en-TR`), English otherwise. To pick one yourself, set `KOBO_ISTATISTIK_DIL` to `en` or `tr`:
+
+```sh
+KOBO_ISTATISTIK_DIL=en python3 mac/kobo_istatistik.py --panel
+```
+
+The background app doesn't see your shell's environment, so to keep the same language when the dashboard updates on plug-in, pass the variable to the installer as well: `KOBO_ISTATISTIK_DIL=en mac/kur.sh`.
+
 ## How it works
 
 ```
@@ -119,7 +130,7 @@ The logger writes these files to `.adds/okumakaydi/` on the Kobo's storage:
 ## Troubleshooting
 
 - **The dashboard says the logger isn't running.** A Kobo firmware update may have removed it. Copy `build/KoboRoot.tgz` to `.kobo/` again and eject the Kobo.
-- **No notification when you plug in.** Check `veri/otomatik.log`. If it mentions a permission error (`izin hatası`), open System Settings > Privacy & Security > Files & Folders and turn on Removable Volumes for Kobo İstatistik.
+- **No notification when you plug in.** Check `veri/otomatik.log`. If it mentions a permission error (`permission error`, or `izin hatası` in Turkish), open System Settings > Privacy & Security > Files & Folders and turn on Removable Volumes for Kobo İstatistik.
 - **Nothing is recorded on the Kobo.** Plug it in and look for `.adds/okumakaydi/okumakaydi.log`. It should contain a line with `başladı` ("started").
 
 ## Uninstalling
@@ -131,7 +142,7 @@ The logger writes these files to `.adds/okumakaydi/` on the Kobo's storage:
 
 - Kobo updates its time counter for KEPUB books. Plain EPUB and PDF files may not be counted.
 - Kobo firmware updates may remove the logger. The dashboard warns you when that happens, and you reinstall it the same way.
-- The dashboard, notifications and code comments are in Turkish. Translations are welcome.
+- The dashboard and notifications come in English and Turkish only. Code identifiers and comments are in Turkish.
 
 ## Privacy
 

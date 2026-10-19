@@ -9,6 +9,8 @@ Kullanım:
   python3 kobo_istatistik.py --otomatik  launchd için: Kobo takılı değilse sessizce çık,
                                          paneli açmadan güncelle, bildirim göster
   python3 kobo_istatistik.py --panel     Kobo'ya bakmadan paneli yeniden üret ve aç
+
+Arayüz dili (panel, bildirimler, konsol): KOBO_ISTATISTIK_DIL=tr|en, yoksa macOS dili.
 """
 
 import argparse
@@ -36,6 +38,88 @@ KOBO_KAYIT = KOBO / ".adds" / "okumakaydi"
 
 # Betik canlıyken saatte bir nabız yazar; son okuma bundan çok sonraysa betik çalışmıyordur.
 NABIZ_TOLERANSI = 2 * 3600
+
+# Kullanıcının gördüğü metinler. Panelin metinleri panel_sablon.html'de, dil oraya
+# gömülü verideki "dil" alanıyla geçer.
+METINLER = {
+    "tr": {
+        "aciklama": ("Kobo okuma istatistikleri: Kobo takılıysa kayıtlarını alır, paneli "
+                     "üretir ve açar."),
+        "yardim_otomatik": "launchd modu: Kobo takılı değilse sessizce çık, paneli açmadan "
+                           "güncelle, bildirim göster",
+        "yardim_panel": "Kobo'ya bakmadan paneli yeniden üret ve aç",
+        "bildirim_basligi": "Kobo İstatistik",
+        "betik_hic_calismamis": ("Kobo'daki kayıt betiği hiç çalışmamış. Kurulum tamamlanmamış "
+                                 "olabilir: KoboRoot.tgz'yi .kobo klasörüne kopyalayıp Kobo'yu çıkar."),
+        "betik_durmus": ("Kobo'daki kayıt betiği {tarih} tarihinden beri çalışmıyor görünüyor. "
+                         "Kobo yazılım güncellemesi betiği silmiş olabilir; build/KoboRoot.tgz'yi "
+                         "yeniden .kobo klasörüne kopyalayıp Kobo'yu çıkar."),
+        "tarih_bicimi": "%d.%m.%Y %H:%M",
+        "izin_hatasi": "izin hatası: {hata}",
+        "izin_bildirimi": ("Kobo'daki dosyalara erişim izni yok. Sistem Ayarları > Gizlilik ve "
+                           "Güvenlik > Dosyalar ve Klasörler'den python3'e Çıkarılabilir Birimler "
+                           "izni ver."),
+        "alindi": "Kobo'dan alındı: {kayit} yeni kayıt, {anlik} anlık satır.",
+        "uyari": "UYARI:",
+        "takili_degil": "Kobo takılı değil; mevcut verilerle panel üretiliyor.",
+        "veri_yok": "Henüz veri yok. Kobo'yu takıp tekrar çalıştır.",
+        "panel": "Panel: {yol}",
+        "bildirim_bugun": "Bugün {sure} okudun. Panel güncellendi.",
+        "bildirim_uyari": "Dikkat: kayıt betiği çalışmıyor olabilir. Paneli aç.",
+        "sure_dk": "{dk} dk",
+        "sure_sa_dk": "{sa} sa {dk:02d} dk",
+    },
+    "en": {
+        "aciklama": ("Kobo reading stats: if the Kobo is plugged in, imports its records, "
+                     "then builds and opens the dashboard."),
+        "yardim_otomatik": "launchd mode: exit quietly if no Kobo is plugged in, update the "
+                           "dashboard without opening it, show a notification",
+        "yardim_panel": "rebuild and open the dashboard without looking for the Kobo",
+        "bildirim_basligi": "Kobo Reading Stats",
+        "betik_hic_calismamis": ("The logger on the Kobo has never run. Setup may be incomplete: "
+                                 "copy KoboRoot.tgz to the .kobo folder and eject the Kobo."),
+        "betik_durmus": ("The logger on the Kobo seems to have stopped on {tarih}. A Kobo "
+                         "firmware update may have removed it; copy build/KoboRoot.tgz to the "
+                         ".kobo folder again and eject the Kobo."),
+        "tarih_bicimi": "%Y-%m-%d %H:%M",
+        "izin_hatasi": "permission error: {hata}",
+        "izin_bildirimi": ("No permission to read the files on the Kobo. In System Settings > "
+                           "Privacy & Security > Files & Folders, give python3 access to "
+                           "Removable Volumes."),
+        "alindi": "Imported from the Kobo: {kayit} new log rows, {anlik} snapshot rows.",
+        "uyari": "WARNING:",
+        "takili_degil": "The Kobo isn't plugged in; building the dashboard from existing data.",
+        "veri_yok": "No data yet. Plug in the Kobo and run this again.",
+        "panel": "Dashboard: {yol}",
+        "bildirim_bugun": "You read for {sure} today. Dashboard updated.",
+        "bildirim_uyari": "Heads up: the logger on the Kobo may have stopped. Open the dashboard.",
+        "sure_dk": "{dk} min",
+        "sure_sa_dk": "{sa} h {dk:02d} min",
+    },
+}
+
+
+def dil_sec():
+    """KOBO_ISTATISTIK_DIL (tr/en) varsa onu, yoksa macOS'un ilk tercih edilen dilini kullanır.
+    Dil Türkçe ya da bölge Türkiye ise (tr-TR, en-TR) Türkçe, değilse İngilizce."""
+    secim = os.environ.get("KOBO_ISTATISTIK_DIL", "").strip().lower()[:2]
+    if secim in METINLER:
+        return secim
+    try:
+        cikti = subprocess.run(["defaults", "read", "-g", "AppleLanguages"], capture_output=True,
+                               text=True, timeout=5, check=False).stdout
+    except (OSError, subprocess.SubprocessError):
+        return "en"
+    # Çıktı "(\n    "en-TR",\n    "tr-TR"\n)" biçiminde; ilk öğe asıl tercih.
+    diller = [d.strip().strip('"') for d in cikti.strip().strip("()").split(",")]
+    parcalar = (diller[0] if diller else "").replace("_", "-").split("-")
+    if parcalar[0].lower() == "tr" or "TR" in (p.upper() for p in parcalar[1:]):
+        return "tr"
+    return "en"
+
+
+DIL = dil_sec()
+M = METINLER[DIL]
 
 ANLIK_SORGU = """
 SELECT ContentID, TimeSpentReading, ___PercentRead, ReadStatus, COALESCE(DateLastRead, ''),
@@ -140,18 +224,15 @@ def kobo_zamani(metin):
 def betik_sagligi(anlik_satirlar):
     """Takılı Kobo'daki betiğin çalışıp çalışmadığını tahmin eder. Sorun varsa açıklama döndürür."""
     if not (KOBO_KAYIT / "kayit.tsv").exists():
-        return ("Kobo'daki kayıt betiği hiç çalışmamış. Kurulum tamamlanmamış olabilir: "
-                "KoboRoot.tgz'yi .kobo klasörüne kopyalayıp Kobo'yu çıkar.")
+        return M["betik_hic_calismamis"]
     try:
         nabiz = int((KOBO_KAYIT / "nabiz").read_text().strip())
     except (OSError, ValueError):
         return None
     son_okuma = max((kobo_zamani(s[4]) or 0 for s in anlik_satirlar), default=0)
     if son_okuma - nabiz > NABIZ_TOLERANSI:
-        tarih = datetime.fromtimestamp(nabiz).strftime("%d.%m.%Y %H:%M")
-        return (f"Kobo'daki kayıt betiği {tarih} tarihinden beri çalışmıyor görünüyor. "
-                "Kobo yazılım güncellemesi betiği silmiş olabilir; build/KoboRoot.tgz'yi "
-                "yeniden .kobo klasörüne kopyalayıp Kobo'yu çıkar.")
+        tarih = datetime.fromtimestamp(nabiz).strftime(M["tarih_bicimi"])
+        return M["betik_durmus"].format(tarih=tarih)
     return None
 
 
@@ -256,6 +337,7 @@ def hesapla(db):
         "kobo_toplam": sum(k["toplam"] for k in kitaplar),
         "uyari": meta_al(db, "uyari"),
         "son_aktarim": meta_al(db, "son_aktarim"),
+        "dil": DIL,
     }
 
 
@@ -270,19 +352,24 @@ def panel_uret(veri):
 
 
 def bildirim(mesaj):
-    betik = f'display notification {json.dumps(mesaj)} with title "Kobo İstatistik"'
+    # AppleScript \u kaçışlarını tanımıyor; ensure_ascii=False olmazsa "Bugün" derlenmez.
+    mesaj, baslik = (json.dumps(s, ensure_ascii=False) for s in (mesaj, M["bildirim_basligi"]))
+    betik = f"display notification {mesaj} with title {baslik}"
     subprocess.run(["osascript", "-e", betik], check=False, capture_output=True)
 
 
 def sure_metni(saniye):
     dakika = round(saniye / 60)
-    return f"{dakika // 60} sa {dakika % 60:02d} dk" if dakika >= 60 else f"{dakika} dk"
+    if dakika >= 60:
+        return M["sure_sa_dk"].format(sa=dakika // 60, dk=dakika % 60)
+    return M["sure_dk"].format(dk=dakika)
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--otomatik", action="store_true", help="launchd modu")
-    ap.add_argument("--panel", action="store_true", help="sadece paneli üret ve aç")
+    ap = argparse.ArgumentParser(description=M["aciklama"],
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--otomatik", action="store_true", help=M["yardim_otomatik"])
+    ap.add_argument("--panel", action="store_true", help=M["yardim_panel"])
     args = ap.parse_args()
 
     db = veritabani()
@@ -299,9 +386,9 @@ def main():
             yeni_kayit = cihaz_kaydini_al(db)
             anlik, yeni_anlik = kobo_anlik_al(db)
         except PermissionError as hata:
-            print(f"{datetime.now():%Y-%m-%d %H:%M} izin hatası: {hata}", file=sys.stderr)
-            bildirim("Kobo'daki dosyalara erişim izni yok. Sistem Ayarları > Gizlilik ve Güvenlik "
-                     "> Dosyalar ve Klasörler'den python3'e Çıkarılabilir Birimler izni ver.")
+            print(f"{datetime.now():%Y-%m-%d %H:%M}", M["izin_hatasi"].format(hata=hata),
+                  file=sys.stderr)
+            bildirim(M["izin_bildirimi"])
             return 1
         if meta_al(db, "takip_baslangic") is None:
             ilk = db.execute("SELECT MIN(zaman) FROM ornekler").fetchone()[0]
@@ -311,25 +398,25 @@ def main():
         meta_yaz(db, "uyari", uyari or "")
         meta_yaz(db, "son_aktarim", datetime.now().isoformat(timespec="minutes"))
         db.commit()
-        print(f"Kobo'dan alındı: {yeni_kayit or 0} yeni kayıt, {yeni_anlik} anlık satır.")
+        print(M["alindi"].format(kayit=yeni_kayit or 0, anlik=yeni_anlik))
         if uyari:
-            print("UYARI:", uyari)
+            print(M["uyari"], uyari)
     elif not kobo_takili and not args.panel:
-        print("Kobo takılı değil; mevcut verilerle panel üretiliyor.")
+        print(M["takili_degil"])
 
     if meta_al(db, "takip_baslangic") is None:
-        print("Henüz veri yok. Kobo'yu takıp tekrar çalıştır.")
+        print(M["veri_yok"])
         return 0
 
     veri = hesapla(db)
     panel_uret(veri)
-    print(f"Panel: {PANEL}")
+    print(M["panel"].format(yol=PANEL))
 
     bugun = veri["gunler"][-1]["saniye"] if veri["gunler"] else 0
     if args.otomatik:
-        mesaj = f"Bugün {sure_metni(bugun)} okudun. Panel güncellendi."
+        mesaj = M["bildirim_bugun"].format(sure=sure_metni(bugun))
         if veri["uyari"]:
-            mesaj = "Dikkat: kayıt betiği çalışmıyor olabilir. Paneli aç."
+            mesaj = M["bildirim_uyari"]
         bildirim(mesaj)
     else:
         subprocess.run(["open", str(PANEL)], check=False)

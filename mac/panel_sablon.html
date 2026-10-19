@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="tr">
+<html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Okuma İstatistiklerim</title>
+<title></title>
 <style>
   :root {
     color-scheme: light;
@@ -161,14 +161,14 @@
 <body>
 <main>
   <header>
-    <h1>Okuma istatistiklerim</h1>
+    <h1 data-metin="baslik"></h1>
     <p id="kaynak"></p>
   </header>
   <div id="uyari-yeri"></div>
 
   <section class="ozet">
     <div class="kart">
-      <div class="hero-etiket" id="hero-etiket">Bugün</div>
+      <div class="hero-etiket" id="hero-etiket"></div>
       <div class="hero-deger" id="hero-deger"></div>
       <div class="hero-alt" id="hero-alt"></div>
     </div>
@@ -176,41 +176,44 @@
   </section>
 
   <section class="kart">
-    <h2>Son 30 gün</h2>
-    <p class="alt">Günlük okuma süresi</p>
+    <h2 data-metin="son30"></h2>
+    <p class="alt" data-metin="gunlukAlt"></p>
     <div class="grafik" id="g-gunluk"></div>
   </section>
 
   <section class="kart">
-    <h2>Okuma takvimi</h2>
-    <p class="alt">Son 26 hafta; boş alanlar takip öncesi</p>
+    <h2 data-metin="takvimBaslik"></h2>
+    <p class="alt" data-metin="takvimAlt"></p>
     <div class="grafik" id="g-takvim"></div>
     <div class="lejant" id="takvim-lejant"></div>
   </section>
 
   <section class="kart">
-    <h2>Günün hangi saatlerinde okuyorum?</h2>
-    <p class="alt">Takip başlangıcından beri toplam okuma süresi</p>
+    <h2 data-metin="saatBaslik"></h2>
+    <p class="alt" data-metin="saatAlt"></p>
     <div class="grafik" id="g-saat"></div>
   </section>
 
   <section class="kart">
-    <h2>Kitaplar</h2>
-    <p class="alt">Toplam süre Kobo'nun kendi sayacından; “takipte” bu uygulamanın gördüğü kısım</p>
+    <h2 data-metin="kitaplar"></h2>
+    <p class="alt" data-metin="kitaplarAlt"></p>
     <div class="tablo-kap">
       <table>
         <thead><tr>
-          <th>Kitap</th><th>İlerleme</th><th class="sayi">Toplam</th><th class="sayi">Takipte</th>
-          <th class="sayi">Son okuma</th><th class="sayi">Tahmini kalan</th>
+          <th data-metin="thKitap"></th><th data-metin="thIlerleme"></th>
+          <th class="sayi" data-metin="thToplam"></th><th class="sayi" data-metin="thTakipte"></th>
+          <th class="sayi" data-metin="thSonOkuma"></th><th class="sayi" data-metin="thKalan"></th>
         </tr></thead>
         <tbody id="kitaplar"></tbody>
       </table>
     </div>
     <details>
-      <summary>Günlük tablo</summary>
+      <summary data-metin="gunlukTablo"></summary>
       <div class="tablo-kap">
         <table>
-          <thead><tr><th>Tarih</th><th class="sayi">Süre</th><th>Kitaplar</th></tr></thead>
+          <thead><tr>
+            <th data-metin="thTarih"></th><th class="sayi" data-metin="thSure"></th><th data-metin="kitaplar"></th>
+          </tr></thead>
           <tbody id="gunluk-tablo"></tbody>
         </table>
       </div>
@@ -224,22 +227,134 @@
 <script>
 const V = /*VERI*/null;
 
-const AYLAR = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
-const AY_KISA = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
-const GUN_KISA = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
+// --- metinler ------------------------------------------------------------------------
+// Dil Python tarafında seçilir ve V.dil olarak gelir. data-metin özelliği olan öğeler
+// buradaki anahtarla doldurulur; parametreli metinler fonksiyon.
+const METINLER = {
+  tr: {
+    sayfaBasligi: "Okuma İstatistiklerim",
+    baslik: "Okuma istatistiklerim",
+    kaynak: (sonVeri, takipBas) => `Son veri: ${sonVeri} · Takip başlangıcı: ${takipBas}`,
+    uyari: "Uyarı",
+    bugun: "Bugün",
+    sonVeriGunu: tarih => `${tarih} (son veri)`,
+    dun: s => `Dün: ${s}`,
+    takipBugun: "Takip bugün başladı",
+    buHafta: "Bu hafta",
+    pazartesidenBeri: "Pazartesiden beri",
+    buAy: ay => `Bu ay (${ay})`,
+    seri: "Okuma serisi",
+    gunSayisi: n => `${n} gün`,
+    enUzun: gunler => `En uzun: ${gunler}`,
+    ortalama: "Günlük ortalama",
+    takiptekiGunler: n => `Takipteki ${n} gün`,
+    son30: "Son 30 gün",
+    bitenKitap: "Biten kitap",
+    takipBasladigindanBeri: "Takip başladığından beri",
+    koboToplam: "Kobo'daki toplam",
+    tumKitaplar: "Tüm kitaplar",
+    gunlukAlt: "Günlük okuma süresi",
+    takvimBaslik: "Okuma takvimi",
+    takvimAlt: "Son 26 hafta; boş alanlar takip öncesi",
+    saatBaslik: "Günün hangi saatlerinde okuyorum?",
+    saatAlt: "Takip başlangıcından beri toplam okuma süresi",
+    kitaplar: "Kitaplar",
+    kitaplarAlt: "Toplam süre Kobo'nun kendi sayacından; “takipte” bu uygulamanın gördüğü kısım",
+    thKitap: "Kitap",
+    thIlerleme: "İlerleme",
+    thToplam: "Toplam",
+    thTakipte: "Takipte",
+    thSonOkuma: "Son okuma",
+    thKalan: "Tahmini kalan",
+    gunlukTablo: "Günlük tablo",
+    thTarih: "Tarih",
+    thSure: "Süre",
+    bitti: tarih => tarih ? `Bitti · ${tarih}` : "Bitti",
+    okunuyor: "Okunuyor",
+    yuzde: n => `%${n}`,
+    veriYok: "Veri yok",
+    takipOncesi: tarih => `${tarih} · takip öncesi`,
+    altBilgi: son => `Kobo'dan son aktarım: ${son}. Panel Kobo'yu Mac'e her taktığında güncellenir.`,
+    dk: dk => `${dk} dk`,
+    saDk: (sa, dk) => `${sa} sa ${dk} dk`,
+    saEksen: sa => `${sa} sa`,
+    lejant: ["0", "1–15 dk", "15–30 dk", "30–60 dk", "1 sa+"],
+    aylar: ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"],
+    ayKisa: ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"],
+    gunKisa: ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"],
+    kisaTarih: (gun, ay) => `${gun} ${ay}`,                        // 19 Eki
+    uzunTarih: (gun, ay, haftaGunu) => `${gun} ${ay} ${haftaGunu}`, // 19 Ekim Pzt
+  },
+  en: {
+    sayfaBasligi: "My Reading Stats",
+    baslik: "My reading stats",
+    kaynak: (sonVeri, takipBas) => `Latest data: ${sonVeri} · Tracking since: ${takipBas}`,
+    uyari: "Warning",
+    bugun: "Today",
+    sonVeriGunu: tarih => `${tarih} (latest data)`,
+    dun: s => `Yesterday: ${s}`,
+    takipBugun: "Tracking started today",
+    buHafta: "This week",
+    pazartesidenBeri: "Since Monday",
+    buAy: ay => `This month (${ay})`,
+    seri: "Reading streak",
+    gunSayisi: n => n === 1 ? "1 day" : `${n} days`,
+    enUzun: gunler => `Longest: ${gunler}`,
+    ortalama: "Daily average",
+    takiptekiGunler: n => n === 1 ? "Over 1 tracked day" : `Over ${n} tracked days`,
+    son30: "Last 30 days",
+    bitenKitap: "Books finished",
+    takipBasladigindanBeri: "Since tracking started",
+    koboToplam: "Total on Kobo",
+    tumKitaplar: "All books",
+    gunlukAlt: "Daily reading time",
+    takvimBaslik: "Reading calendar",
+    takvimAlt: "Last 26 weeks; blank days are before tracking started",
+    saatBaslik: "What time of day do I read?",
+    saatAlt: "Total reading time by hour since tracking started",
+    kitaplar: "Books",
+    kitaplarAlt: "Total time comes from Kobo's own counter; “tracked” is the part this app has seen",
+    thKitap: "Book",
+    thIlerleme: "Progress",
+    thToplam: "Total",
+    thTakipte: "Tracked",
+    thSonOkuma: "Last read",
+    thKalan: "Est. time left",
+    gunlukTablo: "Daily table",
+    thTarih: "Date",
+    thSure: "Time",
+    bitti: tarih => tarih ? `Finished · ${tarih}` : "Finished",
+    okunuyor: "Reading",
+    yuzde: n => `${n}%`,
+    veriYok: "No data",
+    takipOncesi: tarih => `${tarih} · before tracking`,
+    altBilgi: son => `Last import from Kobo: ${son}. The dashboard updates every time you plug the Kobo into your Mac.`,
+    dk: dk => `${dk} min`,
+    saDk: (sa, dk) => `${sa} h ${dk} min`,
+    saEksen: sa => `${sa} h`,
+    lejant: ["0", "1–15 min", "15–30 min", "30–60 min", "1 h+"],
+    aylar: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+    ayKisa: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    gunKisa: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    kisaTarih: (gun, ay) => `${ay} ${gun}`,                          // Oct 19
+    uzunTarih: (gun, ay, haftaGunu) => `${haftaGunu}, ${ay} ${gun}`, // Mon, October 19
+  },
+};
+const DIL = METINLER[V.dil] ? V.dil : "tr";
+const M = METINLER[DIL];
 const SVG = "http://www.w3.org/2000/svg";
 
 // --- yardımcılar -------------------------------------------------------------------
 const tarihAl = s => { const [y, m, d] = s.slice(0, 10).split("-").map(Number); return new Date(y, m - 1, d); };
 const anahtar = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const gunEkle = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
-const kisaTarih = d => `${d.getDate()} ${AY_KISA[d.getMonth()]}`;
-const uzunTarih = d => `${d.getDate()} ${AYLAR[d.getMonth()]} ${GUN_KISA[d.getDay()]}`;
+const kisaTarih = d => M.kisaTarih(d.getDate(), M.ayKisa[d.getMonth()]);
+const uzunTarih = d => M.uzunTarih(d.getDate(), M.aylar[d.getMonth()], M.gunKisa[d.getDay()]);
 
 function sure(sn) {
   const dk = Math.round(sn / 60);
-  if (dk < 60) return `${dk} dk`;
-  return `${Math.floor(dk / 60)} sa ${String(dk % 60).padStart(2, "0")} dk`;
+  if (dk < 60) return M.dk(dk);
+  return M.saDk(Math.floor(dk / 60), String(dk % 60).padStart(2, "0"));
 }
 
 function el(etiket, ozellik = {}, ...cocuklar) {
@@ -320,11 +435,11 @@ function seriler() {
 // --- üst bölüm -----------------------------------------------------------------------
 function ustBolum() {
   const bugunMu = anahtar(new Date()) === anahtar(veriGunu);
-  document.getElementById("hero-etiket").textContent = bugunMu ? "Bugün" : `${uzunTarih(veriGunu)} (son veri)`;
+  document.getElementById("hero-etiket").textContent = bugunMu ? M.bugun : M.sonVeriGunu(uzunTarih(veriGunu));
   document.getElementById("hero-deger").textContent = sure(gunSn(veriGunu));
   const dun = gunEkle(veriGunu, -1);
   document.getElementById("hero-alt").textContent =
-    takipte(dun) ? `Dün: ${sure(gunSn(dun))}` : "Takip bugün başladı";
+    takipte(dun) ? M.dun(sure(gunSn(dun))) : M.takipBugun;
 
   const haftaBas = gunEkle(veriGunu, -((veriGunu.getDay() + 6) % 7));
   const ayBas = new Date(veriGunu.getFullYear(), veriGunu.getMonth(), 1);
@@ -335,12 +450,12 @@ function ustBolum() {
   const biten = V.kitaplar.filter(k => k.bitis && takipte(tarihAl(k.bitis))).length;
 
   const karolar = [
-    ["Bu hafta", sure(aralikToplam(haftaBas, veriGunu)), "Pazartesiden beri"],
-    [`Bu ay (${AYLAR[veriGunu.getMonth()]})`, sure(aralikToplam(ayBas, veriGunu)), null],
-    ["Okuma serisi", `${simdiki} gün`, `En uzun: ${enUzun} gün`],
-    ["Günlük ortalama", sure(aralikToplam(ortBas, veriGunu) / ortGun), ortGun < 30 ? `Takipteki ${ortGun} gün` : "Son 30 gün"],
-    ["Biten kitap", String(biten), "Takip başladığından beri"],
-    ["Kobo'daki toplam", sure(V.kobo_toplam), "Tüm kitaplar"],
+    [M.buHafta, sure(aralikToplam(haftaBas, veriGunu)), M.pazartesidenBeri],
+    [M.buAy(M.aylar[veriGunu.getMonth()]), sure(aralikToplam(ayBas, veriGunu)), null],
+    [M.seri, M.gunSayisi(simdiki), M.enUzun(M.gunSayisi(enUzun))],
+    [M.ortalama, sure(aralikToplam(ortBas, veriGunu) / ortGun), ortGun < 30 ? M.takiptekiGunler(ortGun) : M.son30],
+    [M.bitenKitap, String(biten), M.takipBasladigindanBeri],
+    [M.koboToplam, sure(V.kobo_toplam), M.tumKitaplar],
   ];
   const kap = document.getElementById("karolar");
   for (const [etiket, deger, alt] of karolar) {
@@ -349,13 +464,13 @@ function ustBolum() {
   }
 
   const k = document.getElementById("kaynak");
-  k.textContent = `Son veri: ${uzunTarih(veriGunu)} ${V.olusturma.slice(11, 16)} · Takip başlangıcı: ${uzunTarih(takipBas)}`;
+  k.textContent = M.kaynak(`${uzunTarih(veriGunu)} ${V.olusturma.slice(11, 16)}`, uzunTarih(takipBas));
   if (V.uyari) {
     const ikon = svgEl("svg", { width: 18, height: 18, viewBox: "0 0 18 18", "aria-hidden": "true" });
     ikon.append(svgEl("path", { d: "M9 1.5 17 16H1Z", fill: "var(--warning)" }),
       svgEl("path", { d: "M9 6.5v4.5M9 13v.5", stroke: "#0b0b0b", "stroke-width": 1.8, "stroke-linecap": "round" }));
     document.getElementById("uyari-yeri").append(
-      el("div", { class: "uyari", role: "alert" }, ikon, el("div", {}, el("strong", {}, "Uyarı"), V.uyari)));
+      el("div", { class: "uyari", role: "alert" }, ikon, el("div", {}, el("strong", {}, M.uyari), V.uyari)));
   }
 }
 
@@ -377,7 +492,7 @@ function sutunGrafik(kapId, ogeler, { xEtiketi, ipucuIcerik, birimDk = true }) {
     const y = yOlcek(v);
     svg.append(svgEl("line", { x1: sol, x2: G, y1: y, y2: y, stroke: v === 0 ? "var(--axis)" : "var(--grid)", "stroke-width": 1, "shape-rendering": "crispEdges" }));
     const t = svgEl("text", { x: sol - 6, y: y + 4, "text-anchor": "end" });
-    t.textContent = v === 0 ? "0" : adim % 60 === 0 ? `${v / 60} sa` : String(v);
+    t.textContent = v === 0 ? "0" : adim % 60 === 0 ? M.saEksen(v / 60) : String(v);
     svg.append(t);
   }
 
@@ -421,8 +536,8 @@ function gunlukGrafik() {
   sutunGrafik("g-gunluk", ogeler, {
     xEtiketi: (o, i) => (i === 29 || (29 - i) % 7 === 0) ? kisaTarih(o.d) : null,
     ipucuIcerik: o => [
-      o.takipte ? sure(o.deger) : "Veri yok",
-      o.takipte ? uzunTarih(o.d) : `${uzunTarih(o.d)} · takip öncesi`,
+      o.takipte ? sure(o.deger) : M.veriYok,
+      o.takipte ? uzunTarih(o.d) : M.takipOncesi(uzunTarih(o.d)),
       o.kitaplar.map(k => [k.baslik, sure(k.saniye)]),
     ],
   });
@@ -437,13 +552,8 @@ function saatGrafik() {
 }
 
 // --- takvim ısı haritası --------------------------------------------------------------
-const KADEMELER = [
-  { alt: 0, ad: "0", renk: "var(--seq-0)" },
-  { alt: 60, ad: "1–15 dk", renk: "var(--seq-1)" },
-  { alt: 15 * 60, ad: "15–30 dk", renk: "var(--seq-2)" },
-  { alt: 30 * 60, ad: "30–60 dk", renk: "var(--seq-3)" },
-  { alt: 60 * 60, ad: "1 sa+", renk: "var(--seq-4)" },
-];
+const KADEMELER = [0, 60, 15 * 60, 30 * 60, 60 * 60]
+  .map((alt, i) => ({ alt, ad: M.lejant[i], renk: `var(--seq-${i})` }));
 const kademe = sn => KADEMELER.reduce((s, k) => (sn >= k.alt ? k : s), KADEMELER[0]);
 
 function takvim() {
@@ -455,19 +565,19 @@ function takvim() {
   const bas = gunEkle(buHaftaPzt, -7 * (HAFTA - 1));
   const svg = svgEl("svg", { width: sol + HAFTA * hucreAdim, height: ust + 7 * hucreAdim, role: "img" });
 
-  ["Pzt", "", "Çar", "", "Cum", "", ""].forEach((ad, r) => {
-    if (!ad) return;
+  // Satırlar pazartesiden başlar; sadece pazartesi, çarşamba ve cuma yazılır.
+  for (const r of [0, 2, 4]) {
     const t = svgEl("text", { x: 0, y: ust + r * hucreAdim + hucre - 1 });
-    t.textContent = ad;
+    t.textContent = M.gunKisa[r + 1];
     svg.append(t);
-  });
+  }
 
   let sonAy = -1;
   for (let h = 0; h < HAFTA; h++) {
     const haftaBas = gunEkle(bas, 7 * h);
     if (haftaBas.getMonth() !== sonAy && haftaBas.getDate() <= 7) {
       const t = svgEl("text", { x: sol + h * hucreAdim, y: 11 });
-      t.textContent = AY_KISA[haftaBas.getMonth()];
+      t.textContent = M.ayKisa[haftaBas.getMonth()];
       svg.append(t);
       sonAy = haftaBas.getMonth();
     }
@@ -496,11 +606,11 @@ function tablolar() {
   const govde = document.getElementById("kitaplar");
   for (const k of V.kitaplar) {
     const son = k.son_okuma ? tarihAl(k.son_okuma) : null;
-    const durum = k.durum === 2 ? `Bitti${k.bitis ? " · " + kisaTarih(tarihAl(k.bitis)) : ""}` : "Okunuyor";
+    const durum = k.durum === 2 ? M.bitti(k.bitis ? kisaTarih(tarihAl(k.bitis)) : null) : M.okunuyor;
     govde.append(el("tr", {},
       el("td", { class: "kitap" }, el("div", {}, k.baslik), el("div", { class: "durum" }, durum)),
       el("td", {}, el("div", { class: "ilerleme" },
-        el("div", { class: "metre" }, el("b", { style: `width:${k.yuzde}%` })), el("span", {}, `%${k.yuzde}`))),
+        el("div", { class: "metre" }, el("b", { style: `width:${k.yuzde}%` })), el("span", {}, M.yuzde(k.yuzde)))),
       el("td", { class: "sayi" }, sure(k.toplam)),
       el("td", { class: "sayi" }, k.takipte ? sure(k.takipte) : "–"),
       el("td", { class: "sayi" }, son ? kisaTarih(son) : "–"),
@@ -518,12 +628,18 @@ function tablolar() {
   }
 
   const son = V.son_aktarim ? `${uzunTarih(tarihAl(V.son_aktarim))} ${V.son_aktarim.slice(11, 16)}` : "–";
-  document.getElementById("alt-bilgi").textContent =
-    `Kobo'dan son aktarım: ${son}. Panel Kobo'yu Mac'e her taktığında güncellenir.`;
+  document.getElementById("alt-bilgi").textContent = M.altBilgi(son);
+}
+
+function sabitMetinler() {
+  document.documentElement.lang = DIL;
+  document.title = M.sayfaBasligi;
+  for (const e of document.querySelectorAll("[data-metin]")) e.textContent = M[e.dataset.metin];
 }
 
 function grafikler() { gunlukGrafik(); takvim(); saatGrafik(); }
 
+sabitMetinler();
 ustBolum();
 tablolar();
 grafikler();

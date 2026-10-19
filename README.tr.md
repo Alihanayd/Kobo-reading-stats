@@ -4,7 +4,12 @@
 
 Kobo Clara BW'de günlük ne kadar okuduğumu takip eden küçük bir sistem.
 
-![Panel](docs/panel-light.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/panel-dark.tr.png">
+  <img alt="Bugünkü okuma süresi, haftalık ve aylık toplamlar, 30 günlük grafik, okuma takvimi, saatlere göre okuma ve kitap bazında ilerlemeyi gösteren panel" src="docs/panel-light.tr.png">
+</picture>
+
+<sub>Ekran görüntüsündeki veriler uydurmadır.</sub>
 
 Kobo kitap başına sadece *toplam* okuma süresini tutuyor, gün gün geçmiş tutmuyor. Bu yüzden iki parça var:
 
@@ -20,6 +25,16 @@ Docker ya da başka bir servis gerekmez. Mac tarafı macOS'un kendi Python'u (`/
 - Paneli görmek için Spotlight'tan **Kobo İstatistik**'i aç ya da `veri/panel.html`'i aç.
 
 Kobo'yu ne kadar seyrek taktığın önemli değil, günlük ayrım cihazda yapılıyor.
+
+## Dil
+
+Panel, bildirimler ve konsol mesajları Türkçe ya da İngilizce. Varsayılan olarak macOS'un diline bakılır: ilk tercih edilen dil Türkçe ya da bölge Türkiye ise (örneğin `tr-TR`, `en-TR`) Türkçe, değilse İngilizce. Elle seçmek için `KOBO_ISTATISTIK_DIL`'i `tr` ya da `en` yap:
+
+```sh
+KOBO_ISTATISTIK_DIL=tr python3 mac/kobo_istatistik.py --panel
+```
+
+Arka plandaki uygulama kabuğun ortam değişkenlerini görmez. Kobo takılınca güncellenen panelin de aynı dilde kalması için değişkeni kurulumda da ver: `KOBO_ISTATISTIK_DIL=tr mac/kur.sh`.
 
 ## Kurulum
 
@@ -70,7 +85,7 @@ macOS arka plandaki Python'un çıkarılabilir disklere erişmesine izin vermiyo
 ## Sorun giderme
 
 - **Panelde "kayıt betiği çalışmıyor" uyarısı var:** Kobo yazılım güncellemeleri betiği silebilir. `build/KoboRoot.tgz`'yi tekrar `.kobo/` klasörüne kopyalayıp Kobo'yu çıkar.
-- **Takınca bildirim gelmiyor:** `veri/otomatik.log` dosyasına bak. "izin hatası" yazıyorsa Sistem Ayarları > Gizlilik ve Güvenlik > Dosyalar ve Klasörler'de Kobo İstatistik için "Çıkarılabilir Birimler"i aç.
+- **Takınca bildirim gelmiyor:** `veri/otomatik.log` dosyasına bak. "izin hatası" (İngilizcede "permission error") yazıyorsa Sistem Ayarları > Gizlilik ve Güvenlik > Dosyalar ve Klasörler'de Kobo İstatistik için "Çıkarılabilir Birimler"i aç.
 - Elle çalıştırmak için: `python3 mac/kobo_istatistik.py` (Kobo takılıysa kayıtları alır, paneli açar) ya da `--panel` (sadece paneli üretir).
 
 ## Kaldırma

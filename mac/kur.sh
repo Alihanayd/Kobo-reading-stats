@@ -12,6 +12,13 @@ ETIKET=com.gurmehub.kobo-istatistik
 PLIST=$HOME/Library/LaunchAgents/$ETIKET.plist
 UYGULAMA="$HOME/Applications/Kobo İstatistik.app"
 
+# KOBO_ISTATISTIK_DIL verilmişse (tr/en) uygulamaya gömülür; yoksa betik macOS dilini kullanır.
+case "${KOBO_ISTATISTIK_DIL:-}" in
+    tr|en) DIL_ORTAMI="KOBO_ISTATISTIK_DIL=$KOBO_ISTATISTIK_DIL " ;;
+    "") DIL_ORTAMI="" ;;
+    *) echo "KOBO_ISTATISTIK_DIL tr ya da en olmalı." >&2; exit 1 ;;
+esac
+
 mkdir -p "$HOME/Library/LaunchAgents" "$HOME/Applications" "$KOK/veri"
 
 GECICI=$(mktemp -d)
@@ -28,7 +35,7 @@ on run
 	set argumanlar to (current application's NSProcessInfo's processInfo()'s arguments()) as list
 	set secenek to ""
 	if argumanlar contains "--otomatik" then set secenek to " --otomatik"
-	do shell script "/usr/bin/python3 " & quoted form of betik & secenek & " >> " & quoted form of gunluk & " 2>&1 || true"
+	do shell script "${DIL_ORTAMI}/usr/bin/python3 " & quoted form of betik & secenek & " >> " & quoted form of gunluk & " 2>&1 || true"
 end run
 EOF
 rm -rf "$UYGULAMA"
