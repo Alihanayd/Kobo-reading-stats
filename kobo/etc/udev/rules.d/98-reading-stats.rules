@@ -1,0 +1,5 @@
+# Reading stats: starts the background logger at boot.
+# There are several triggers; start.sh makes sure only one copy runs.
+KERNEL=="lo", RUN+="/usr/local/reading-stats/start.sh"
+KERNEL=="loop0", RUN+="/usr/local/reading-stats/start.sh"
+KERNEL=="wlan*", ACTION=="add", RUN+="/usr/local/reading-stats/start.sh"

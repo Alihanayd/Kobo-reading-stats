@@ -1,5 +1,0 @@
-# Okuma kaydı: açılışta arka plan betiğini başlatır.
-# Birden fazla tetikleyici var; baslat.sh aynı anda tek kopya çalışmasını sağlar.
-KERNEL=="lo", RUN+="/usr/local/okumakaydi/baslat.sh"
-KERNEL=="loop0", RUN+="/usr/local/okumakaydi/baslat.sh"
-KERNEL=="wlan*", ACTION=="add", RUN+="/usr/local/okumakaydi/baslat.sh"

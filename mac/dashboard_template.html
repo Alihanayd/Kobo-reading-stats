@@ -1,0 +1,650 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title></title>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7;
+    --surface: #fcfcfb;
+    --ink: #0b0b0b;
+    --ink-2: #52514e;
+    --muted: #898781;
+    --grid: #e1e0d9;
+    --axis: #c3c2b7;
+    --ring: rgba(11, 11, 11, 0.10);
+    --bar: #2a78d6;
+    --bar-hover: #5598e7;
+    --track: #cde2fb;
+    --seq-0: #e1e0d9;
+    --seq-1: #86b6ef;
+    --seq-2: #5598e7;
+    --seq-3: #256abf;
+    --seq-4: #104281;
+    --warning: #fab219;
+    --warning-wash: rgba(250, 178, 25, 0.14);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page: #0d0d0d;
+      --surface: #1a1a19;
+      --ink: #f0efec;
+      --ink-2: #c3c2b7;
+      --muted: #898781;
+      --grid: #2c2c2a;
+      --axis: #383835;
+      --ring: rgba(255, 255, 255, 0.10);
+      --bar: #3987e5;
+      --bar-hover: #6da7ec;
+      --track: #184f95;
+      --seq-0: #2c2c2a;
+      --seq-1: #184f95;
+      --seq-2: #256abf;
+      --seq-3: #5598e7;
+      --seq-4: #9ec5f4;
+      --warning-wash: rgba(250, 178, 25, 0.12);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --ink: #f0efec;
+    --ink-2: #c3c2b7;
+    --muted: #898781;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --ring: rgba(255, 255, 255, 0.10);
+    --bar: #3987e5;
+    --bar-hover: #6da7ec;
+    --track: #184f95;
+    --seq-0: #2c2c2a;
+    --seq-1: #184f95;
+    --seq-2: #256abf;
+    --seq-3: #5598e7;
+    --seq-4: #9ec5f4;
+    --warning-wash: rgba(250, 178, 25, 0.12);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--ink);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 16px 64px; }
+  header h1 { font-size: 22px; font-weight: 600; margin: 0 0 4px; }
+  header p { margin: 0; color: var(--ink-2); font-size: 13px; }
+
+  .warning {
+    display: flex; gap: 10px; align-items: flex-start;
+    margin-top: 20px; padding: 12px 14px; border-radius: 10px;
+    background: var(--warning-wash); box-shadow: inset 0 0 0 1px var(--warning);
+    font-size: 14px;
+  }
+  .warning svg { flex: none; margin-top: 2px; }
+  .warning strong { display: block; }
+
+  .card {
+    background: var(--surface); border-radius: 12px; box-shadow: 0 0 0 1px var(--ring);
+    padding: 20px; margin-top: 16px;
+  }
+  .card h2 { font-size: 15px; font-weight: 600; margin: 0; }
+  .card .sub { color: var(--ink-2); font-size: 13px; margin: 2px 0 14px; }
+
+  .overview { display: grid; grid-template-columns: minmax(200px, 1.2fr) 3fr; gap: 16px; margin-top: 16px; }
+  .overview .card { margin-top: 0; }
+  .hero-label { color: var(--ink-2); font-size: 14px; }
+  .hero-value { font-size: 56px; font-weight: 600; line-height: 1.1; margin-top: 6px; letter-spacing: -0.02em; }
+  .hero-sub { color: var(--ink-2); font-size: 13px; margin-top: 8px; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 20px 16px; }
+  .tile-label { color: var(--ink-2); font-size: 13px; }
+  .tile-value { font-size: 24px; font-weight: 600; margin-top: 2px; }
+  .tile-sub { color: var(--muted); font-size: 12px; }
+
+  .chart { position: relative; width: 100%; }
+  .chart svg { display: block; overflow: visible; }
+  .chart text { font-size: 11px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+  .chart text.label { fill: var(--ink-2); font-weight: 600; }
+  .chart .target { fill: transparent; cursor: default; outline: none; }
+  .chart .target:focus-visible { stroke: var(--ink-2); stroke-width: 1; }
+  .chart .bar { fill: var(--bar); }
+  .chart .bar.active { fill: var(--bar-hover); }
+  .chart .cell.active { stroke: var(--ink); stroke-width: 1.5; }
+
+  .legend { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 12px; color: var(--ink-2); font-size: 12px; }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
+  .legend span + i { margin-left: 8px; }
+
+  .table-wrap { overflow-x: auto; margin: 0 -20px; padding: 0 20px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-weight: 500; color: var(--ink-2); font-size: 12px; padding: 0 12px 8px 0; white-space: nowrap; }
+  td { padding: 10px 12px 10px 0; border-top: 1px solid var(--grid); vertical-align: middle; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.book { min-width: 180px; }
+  td.book .status { color: var(--muted); font-size: 12px; }
+  .progress { display: flex; align-items: center; gap: 8px; min-width: 130px; }
+  .meter { flex: 1; height: 6px; border-radius: 3px; background: var(--track); overflow: hidden; }
+  .meter b { display: block; height: 100%; border-radius: 3px; background: var(--bar); }
+  .progress span { font-variant-numeric: tabular-nums; color: var(--ink-2); font-size: 13px; width: 38px; text-align: right; }
+
+  details { margin-top: 16px; }
+  summary { cursor: pointer; color: var(--ink-2); font-size: 14px; }
+  details table { margin-top: 12px; }
+
+  #tooltip {
+    position: fixed; pointer-events: none; z-index: 10; display: none;
+    background: var(--surface); color: var(--ink); border-radius: 8px;
+    box-shadow: 0 0 0 1px var(--ring), 0 6px 20px rgba(0, 0, 0, 0.12);
+    padding: 8px 10px; font-size: 12px; max-width: 260px;
+  }
+  #tooltip .value { font-size: 15px; font-weight: 600; }
+  #tooltip .title { color: var(--ink-2); }
+  #tooltip .row { display: flex; gap: 8px; justify-content: space-between; color: var(--ink-2); }
+  #tooltip .row b { color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
+
+  footer { color: var(--muted); font-size: 12px; margin-top: 24px; }
+
+  @media (max-width: 640px) {
+    main { padding-top: 20px; }
+    .overview { grid-template-columns: 1fr; }
+    .hero-value { font-size: 48px; }
+    .card { padding: 16px; }
+    .table-wrap { margin: 0 -16px; padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1 data-text="heading"></h1>
+    <p id="source"></p>
+  </header>
+  <div id="warning-slot"></div>
+
+  <section class="overview">
+    <div class="card">
+      <div class="hero-label" id="hero-label"></div>
+      <div class="hero-value" id="hero-value"></div>
+      <div class="hero-sub" id="hero-sub"></div>
+    </div>
+    <div class="card"><div class="tiles" id="tiles"></div></div>
+  </section>
+
+  <section class="card">
+    <h2 data-text="last30"></h2>
+    <p class="sub" data-text="dailySub"></p>
+    <div class="chart" id="chart-daily"></div>
+  </section>
+
+  <section class="card">
+    <h2 data-text="calendarTitle"></h2>
+    <p class="sub" data-text="calendarSub"></p>
+    <div class="chart" id="chart-calendar"></div>
+    <div class="legend" id="calendar-legend"></div>
+  </section>
+
+  <section class="card">
+    <h2 data-text="hoursTitle"></h2>
+    <p class="sub" data-text="hoursSub"></p>
+    <div class="chart" id="chart-hours"></div>
+  </section>
+
+  <section class="card">
+    <h2 data-text="books"></h2>
+    <p class="sub" data-text="booksSub"></p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th data-text="thBook"></th><th data-text="thProgress"></th>
+          <th class="num" data-text="thTotal"></th><th class="num" data-text="thTracked"></th>
+          <th class="num" data-text="thLastRead"></th><th class="num" data-text="thTimeLeft"></th>
+        </tr></thead>
+        <tbody id="book-rows"></tbody>
+      </table>
+    </div>
+    <details>
+      <summary data-text="dailyTable"></summary>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th data-text="thDate"></th><th class="num" data-text="thTime"></th><th data-text="books"></th>
+          </tr></thead>
+          <tbody id="day-rows"></tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+
+  <footer id="footer-text"></footer>
+</main>
+<div id="tooltip" role="status" aria-live="polite"></div>
+
+<script>
+const DATA = /*DATA*/null;
+
+// --- text ------------------------------------------------------------------------------
+// The language is chosen on the Python side and arrives as DATA.lang. Elements with a
+// data-text attribute are filled with the matching key; text with parameters is a function.
+const STRINGS = {
+  en: {
+    pageTitle: "My Reading Stats",
+    heading: "My reading stats",
+    source: (latest, since) => `Latest data: ${latest} · Tracking since: ${since}`,
+    warning: "Warning",
+    today: "Today",
+    latestDay: date => `${date} (latest data)`,
+    yesterday: d => `Yesterday: ${d}`,
+    trackingStartedToday: "Tracking started today",
+    thisWeek: "This week",
+    sinceMonday: "Since Monday",
+    thisMonth: month => `This month (${month})`,
+    streak: "Reading streak",
+    days: n => n === 1 ? "1 day" : `${n} days`,
+    longest: days => `Longest: ${days}`,
+    dailyAverage: "Daily average",
+    overTrackedDays: n => n === 1 ? "Over 1 tracked day" : `Over ${n} tracked days`,
+    last30: "Last 30 days",
+    booksFinished: "Books finished",
+    sinceTrackingStarted: "Since tracking started",
+    koboTotal: "Total on Kobo",
+    allBooks: "All books",
+    dailySub: "Daily reading time",
+    calendarTitle: "Reading calendar",
+    calendarSub: "Last 26 weeks; blank days are before tracking started",
+    hoursTitle: "What time of day do I read?",
+    hoursSub: "Total reading time by hour since tracking started",
+    books: "Books",
+    booksSub: "Total time comes from Kobo's own counter; “tracked” is the part this app has seen",
+    thBook: "Book",
+    thProgress: "Progress",
+    thTotal: "Total",
+    thTracked: "Tracked",
+    thLastRead: "Last read",
+    thTimeLeft: "Est. time left",
+    dailyTable: "Daily table",
+    thDate: "Date",
+    thTime: "Time",
+    finished: date => date ? `Finished · ${date}` : "Finished",
+    reading: "Reading",
+    percent: n => `${n}%`,
+    noData: "No data",
+    beforeTracking: date => `${date} · before tracking`,
+    footer: last => `Last import from Kobo: ${last}. The dashboard updates every time you plug the Kobo into your Mac.`,
+    minutes: m => `${m} min`,
+    hoursMinutes: (h, m) => `${h} h ${m} min`,
+    hoursAxis: h => `${h} h`,
+    legend: ["0", "1–15 min", "15–30 min", "30–60 min", "1 h+"],
+    months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+    monthsShort: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    weekdaysShort: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    shortDate: (day, month) => `${month} ${day}`,                       // Oct 19
+    longDate: (day, month, weekday) => `${weekday}, ${month} ${day}`,   // Mon, October 19
+  },
+  tr: {
+    pageTitle: "Okuma İstatistiklerim",
+    heading: "Okuma istatistiklerim",
+    source: (latest, since) => `Son veri: ${latest} · Takip başlangıcı: ${since}`,
+    warning: "Uyarı",
+    today: "Bugün",
+    latestDay: date => `${date} (son veri)`,
+    yesterday: d => `Dün: ${d}`,
+    trackingStartedToday: "Takip bugün başladı",
+    thisWeek: "Bu hafta",
+    sinceMonday: "Pazartesiden beri",
+    thisMonth: month => `Bu ay (${month})`,
+    streak: "Okuma serisi",
+    days: n => `${n} gün`,
+    longest: days => `En uzun: ${days}`,
+    dailyAverage: "Günlük ortalama",
+    overTrackedDays: n => `Takipteki ${n} gün`,
+    last30: "Son 30 gün",
+    booksFinished: "Biten kitap",
+    sinceTrackingStarted: "Takip başladığından beri",
+    koboTotal: "Kobo'daki toplam",
+    allBooks: "Tüm kitaplar",
+    dailySub: "Günlük okuma süresi",
+    calendarTitle: "Okuma takvimi",
+    calendarSub: "Son 26 hafta; boş alanlar takip öncesi",
+    hoursTitle: "Günün hangi saatlerinde okuyorum?",
+    hoursSub: "Takip başlangıcından beri toplam okuma süresi",
+    books: "Kitaplar",
+    booksSub: "Toplam süre Kobo'nun kendi sayacından; “takipte” bu uygulamanın gördüğü kısım",
+    thBook: "Kitap",
+    thProgress: "İlerleme",
+    thTotal: "Toplam",
+    thTracked: "Takipte",
+    thLastRead: "Son okuma",
+    thTimeLeft: "Tahmini kalan",
+    dailyTable: "Günlük tablo",
+    thDate: "Tarih",
+    thTime: "Süre",
+    finished: date => date ? `Bitti · ${date}` : "Bitti",
+    reading: "Okunuyor",
+    percent: n => `%${n}`,
+    noData: "Veri yok",
+    beforeTracking: date => `${date} · takip öncesi`,
+    footer: last => `Kobo'dan son aktarım: ${last}. Panel Kobo'yu Mac'e her taktığında güncellenir.`,
+    minutes: m => `${m} dk`,
+    hoursMinutes: (h, m) => `${h} sa ${m} dk`,
+    hoursAxis: h => `${h} sa`,
+    legend: ["0", "1–15 dk", "15–30 dk", "30–60 dk", "1 sa+"],
+    months: ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"],
+    monthsShort: ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"],
+    weekdaysShort: ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"],
+    shortDate: (day, month) => `${day} ${month}`,                       // 19 Eki
+    longDate: (day, month, weekday) => `${day} ${month} ${weekday}`,    // 19 Ekim Pzt
+  },
+};
+const LANG = STRINGS[DATA.lang] ? DATA.lang : "en";
+const T = STRINGS[LANG];
+const SVG = "http://www.w3.org/2000/svg";
+
+// --- helpers ---------------------------------------------------------------------------
+const parseDate = s => { const [y, m, d] = s.slice(0, 10).split("-").map(Number); return new Date(y, m - 1, d); };
+const dayKey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const shortDate = d => T.shortDate(d.getDate(), T.monthsShort[d.getMonth()]);
+const longDate = d => T.longDate(d.getDate(), T.months[d.getMonth()], T.weekdaysShort[d.getDay()]);
+
+function duration(seconds) {
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return T.minutes(minutes);
+  return T.hoursMinutes(Math.floor(minutes / 60), String(minutes % 60).padStart(2, "0"));
+}
+
+function el(tag, attrs = {}, ...children) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") e.className = v; else if (k === "style") e.style.cssText = v; else e.setAttribute(k, v);
+  }
+  for (const c of children) if (c != null) e.append(c);
+  return e;
+}
+
+function svgEl(tag, attrs = {}) {
+  const e = document.createElementNS(SVG, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  return e;
+}
+
+// A bar with a 4px rounded top and a flat base.
+function barPath(x, y, w, h) {
+  const r = Math.min(4, w / 2, h);
+  return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`;
+}
+
+function niceStep(max) {
+  for (const step of [5, 10, 15, 30, 60, 90, 120, 180, 240, 360]) if (max / step <= 4) return step;
+  return Math.ceil(max / 4 / 60) * 60;
+}
+
+// --- tooltip ---------------------------------------------------------------------------
+const tooltip = document.getElementById("tooltip");
+function showTooltip(event, value, title, rows = []) {
+  tooltip.replaceChildren(el("div", { class: "value" }, value), el("div", { class: "title" }, title));
+  for (const [name, val] of rows) tooltip.append(el("div", { class: "row" }, el("span", {}, name), el("b", {}, val)));
+  tooltip.style.display = "block";
+  let x, y;
+  if (event.clientX !== undefined && event.type !== "focus") { x = event.clientX; y = event.clientY; }
+  else { const r = event.target.getBoundingClientRect(); x = r.left + r.width / 2; y = r.top; }
+  const w = tooltip.offsetWidth, h = tooltip.offsetHeight;
+  tooltip.style.left = Math.max(8, Math.min(innerWidth - w - 8, x - w / 2)) + "px";
+  tooltip.style.top = (y - h - 12 < 8 ? y + 16 : y - h - 12) + "px";
+}
+const hideTooltip = () => { tooltip.style.display = "none"; };
+
+function bindTooltip(target, mark, content) {
+  const show = e => { mark && mark.classList.add("active"); showTooltip(e, ...content()); };
+  const hide = () => { mark && mark.classList.remove("active"); hideTooltip(); };
+  target.addEventListener("pointermove", show);
+  target.addEventListener("pointerleave", hide);
+  target.addEventListener("focus", show);
+  target.addEventListener("blur", hide);
+}
+
+// --- data ------------------------------------------------------------------------------
+const dayMap = new Map(DATA.days.map(d => [d.date, d]));
+const dataDay = parseDate(DATA.generated_at);
+const trackingStart = parseDate(DATA.tracking_start);
+const daySeconds = d => (dayMap.get(dayKey(d)) || { seconds: 0 }).seconds;
+const isTracked = d => d >= trackingStart && d <= dataDay;
+
+function rangeTotal(from, to) {
+  let total = 0;
+  for (let d = from; d <= to; d = addDays(d, 1)) total += daySeconds(d);
+  return total;
+}
+
+function streaks() {
+  let current = 0;
+  let d = daySeconds(dataDay) >= 60 ? dataDay : addDays(dataDay, -1);
+  while (isTracked(d) && daySeconds(d) >= 60) { current++; d = addDays(d, -1); }
+  let longest = 0, run = 0;
+  for (let d2 = trackingStart; d2 <= dataDay; d2 = addDays(d2, 1)) {
+    run = daySeconds(d2) >= 60 ? run + 1 : 0;
+    longest = Math.max(longest, run);
+  }
+  return { current, longest };
+}
+
+// --- overview --------------------------------------------------------------------------
+function renderOverview() {
+  const isToday = dayKey(new Date()) === dayKey(dataDay);
+  document.getElementById("hero-label").textContent = isToday ? T.today : T.latestDay(longDate(dataDay));
+  document.getElementById("hero-value").textContent = duration(daySeconds(dataDay));
+  const yesterday = addDays(dataDay, -1);
+  document.getElementById("hero-sub").textContent =
+    isTracked(yesterday) ? T.yesterday(duration(daySeconds(yesterday))) : T.trackingStartedToday;
+
+  const weekStart = addDays(dataDay, -((dataDay.getDay() + 6) % 7));
+  const monthStart = new Date(dataDay.getFullYear(), dataDay.getMonth(), 1);
+  const thirtyDaysAgo = addDays(dataDay, -29);
+  const averageFrom = thirtyDaysAgo < trackingStart ? trackingStart : thirtyDaysAgo;
+  const averageDays = Math.round((dataDay - averageFrom) / 864e5) + 1;
+  const { current, longest } = streaks();
+  const finished = DATA.books.filter(b => b.finished_on && isTracked(parseDate(b.finished_on))).length;
+
+  const tiles = [
+    [T.thisWeek, duration(rangeTotal(weekStart, dataDay)), T.sinceMonday],
+    [T.thisMonth(T.months[dataDay.getMonth()]), duration(rangeTotal(monthStart, dataDay)), null],
+    [T.streak, T.days(current), T.longest(T.days(longest))],
+    [T.dailyAverage, duration(rangeTotal(averageFrom, dataDay) / averageDays), averageDays < 30 ? T.overTrackedDays(averageDays) : T.last30],
+    [T.booksFinished, String(finished), T.sinceTrackingStarted],
+    [T.koboTotal, duration(DATA.kobo_total), T.allBooks],
+  ];
+  const container = document.getElementById("tiles");
+  for (const [label, value, sub] of tiles) {
+    container.append(el("div", {}, el("div", { class: "tile-label" }, label),
+      el("div", { class: "tile-value" }, value), sub ? el("div", { class: "tile-sub" }, sub) : null));
+  }
+
+  document.getElementById("source").textContent =
+    T.source(`${longDate(dataDay)} ${DATA.generated_at.slice(11, 16)}`, longDate(trackingStart));
+  if (DATA.warning) {
+    const icon = svgEl("svg", { width: 18, height: 18, viewBox: "0 0 18 18", "aria-hidden": "true" });
+    icon.append(svgEl("path", { d: "M9 1.5 17 16H1Z", fill: "var(--warning)" }),
+      svgEl("path", { d: "M9 6.5v4.5M9 13v.5", stroke: "#0b0b0b", "stroke-width": 1.8, "stroke-linecap": "round" }));
+    document.getElementById("warning-slot").append(
+      el("div", { class: "warning", role: "alert" }, icon, el("div", {}, el("strong", {}, T.warning), DATA.warning)));
+  }
+}
+
+// --- bar chart (shared by the 30-day and hour charts) -----------------------------------
+function barChart(containerId, items, { xLabel, tooltipContent }) {
+  const container = document.getElementById(containerId);
+  const W = container.clientWidth, H = 200, left = 34, bottom = 26, top = 18;
+  const plotW = W - left;
+  const values = items.map(item => item.value / 60);
+  const maxMinutes = Math.max(...values, 1);
+  const step = niceStep(maxMinutes);
+  const yMax = Math.ceil(maxMinutes / step) * step;
+  const yScale = v => top + (H - top) * (1 - v / yMax);
+  const band = plotW / items.length;
+  const bw = Math.max(2, Math.min(24, band - 2));
+
+  const svg = svgEl("svg", { width: W, height: H + bottom, role: "img" });
+  for (let v = 0; v <= yMax; v += step) {
+    const y = yScale(v);
+    svg.append(svgEl("line", { x1: left, x2: W, y1: y, y2: y, stroke: v === 0 ? "var(--axis)" : "var(--grid)", "stroke-width": 1, "shape-rendering": "crispEdges" }));
+    const t = svgEl("text", { x: left - 6, y: y + 4, "text-anchor": "end" });
+    t.textContent = v === 0 ? "0" : step % 60 === 0 ? T.hoursAxis(v / 60) : String(v);
+    svg.append(t);
+  }
+
+  const peak = values.indexOf(Math.max(...values));
+  items.forEach((item, i) => {
+    const x = left + i * band + (band - bw) / 2;
+    const minutes = values[i];
+    let bar = null;
+    if (minutes > 0) {
+      const h = Math.max(1, H - yScale(minutes));
+      bar = svgEl("path", { d: barPath(x, H - h, bw, h), class: "bar" });
+      svg.append(bar);
+      if (i === peak) {
+        const t = svgEl("text", { x: x + bw / 2, y: H - h - 5, "text-anchor": "middle", class: "label" });
+        t.textContent = duration(item.value);
+        svg.append(t);
+      }
+    }
+    const label = xLabel(item, i);
+    if (label) {
+      const t = svgEl("text", { x: x + bw / 2, y: H + 17, "text-anchor": "middle" });
+      t.textContent = label;
+      svg.append(t);
+    }
+    const target = svgEl("rect", { x: left + i * band, y: top - 10, width: band, height: H - top + 10, class: "target", tabindex: 0 });
+    const [value, title] = tooltipContent(item);
+    target.setAttribute("aria-label", `${title}: ${value}`);
+    bindTooltip(target, bar, () => tooltipContent(item));
+    svg.append(target);
+  });
+  container.replaceChildren(svg);
+}
+
+function dailyChart() {
+  const items = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = addDays(dataDay, -i);
+    const day = dayMap.get(dayKey(d));
+    items.push({ d, value: day ? day.seconds : 0, books: day ? day.books : [], tracked: isTracked(d) });
+  }
+  barChart("chart-daily", items, {
+    xLabel: (item, i) => (i === 29 || (29 - i) % 7 === 0) ? shortDate(item.d) : null,
+    tooltipContent: item => [
+      item.tracked ? duration(item.value) : T.noData,
+      item.tracked ? longDate(item.d) : T.beforeTracking(longDate(item.d)),
+      item.books.map(b => [b.title, duration(b.seconds)]),
+    ],
+  });
+}
+
+function hourChart() {
+  const items = DATA.hourly.map((seconds, hour) => ({ hour, value: seconds }));
+  barChart("chart-hours", items, {
+    xLabel: item => item.hour % 3 === 0 ? String(item.hour).padStart(2, "0") : null,
+    tooltipContent: item => [duration(item.value), `${String(item.hour).padStart(2, "0")}:00–${String((item.hour + 1) % 24).padStart(2, "0")}:00`],
+  });
+}
+
+// --- calendar heatmap ------------------------------------------------------------------
+const LEVELS = [0, 60, 15 * 60, 30 * 60, 60 * 60]
+  .map((min, i) => ({ min, name: T.legend[i], color: `var(--seq-${i})` }));
+const levelFor = seconds => LEVELS.reduce((found, level) => (seconds >= level.min ? level : found), LEVELS[0]);
+
+function calendar() {
+  const container = document.getElementById("chart-calendar");
+  const WEEKS = 26, left = 30, top = 18;
+  const pitch = Math.max(8, Math.min(18, Math.floor((container.clientWidth - left) / WEEKS)));
+  const cell = pitch - 2;
+  const thisMonday = addDays(dataDay, -((dataDay.getDay() + 6) % 7));
+  const first = addDays(thisMonday, -7 * (WEEKS - 1));
+  const svg = svgEl("svg", { width: left + WEEKS * pitch, height: top + 7 * pitch, role: "img" });
+
+  // Rows start on Monday; only Monday, Wednesday and Friday are labelled.
+  for (const r of [0, 2, 4]) {
+    const t = svgEl("text", { x: 0, y: top + r * pitch + cell - 1 });
+    t.textContent = T.weekdaysShort[r + 1];
+    svg.append(t);
+  }
+
+  let lastMonth = -1;
+  for (let w = 0; w < WEEKS; w++) {
+    const weekStart = addDays(first, 7 * w);
+    if (weekStart.getMonth() !== lastMonth && weekStart.getDate() <= 7) {
+      const t = svgEl("text", { x: left + w * pitch, y: 11 });
+      t.textContent = T.monthsShort[weekStart.getMonth()];
+      svg.append(t);
+      lastMonth = weekStart.getMonth();
+    }
+    for (let r = 0; r < 7; r++) {
+      const d = addDays(weekStart, r);
+      if (!isTracked(d)) continue;
+      const seconds = daySeconds(d);
+      const x = left + w * pitch, y = top + r * pitch;
+      const square = svgEl("rect", { x, y, width: cell, height: cell, rx: 2, fill: levelFor(seconds).color, class: "cell" });
+      const target = svgEl("rect", { x: x - 1, y: y - 1, width: pitch, height: pitch, class: "target", tabindex: 0,
+        "aria-label": `${longDate(d)}: ${duration(seconds)}` });
+      const day = dayMap.get(dayKey(d));
+      bindTooltip(target, square, () => [duration(seconds), longDate(d), (day ? day.books : []).map(b => [b.title, duration(b.seconds)])]);
+      svg.append(square, target);
+    }
+  }
+  container.replaceChildren(svg);
+
+  const legend = document.getElementById("calendar-legend");
+  legend.replaceChildren();
+  for (const level of LEVELS) legend.append(el("i", { style: `background:${level.color}` }), el("span", {}, level.name));
+}
+
+// --- tables ----------------------------------------------------------------------------
+function renderTables() {
+  const bookRows = document.getElementById("book-rows");
+  for (const b of DATA.books) {
+    const last = b.last_read ? parseDate(b.last_read) : null;
+    const status = b.status === 2 ? T.finished(b.finished_on ? shortDate(parseDate(b.finished_on)) : null) : T.reading;
+    bookRows.append(el("tr", {},
+      el("td", { class: "book" }, el("div", {}, b.title), el("div", { class: "status" }, status)),
+      el("td", {}, el("div", { class: "progress" },
+        el("div", { class: "meter" }, el("b", { style: `width:${b.percent}%` })), el("span", {}, T.percent(b.percent)))),
+      el("td", { class: "num" }, duration(b.total)),
+      el("td", { class: "num" }, b.tracked ? duration(b.tracked) : "–"),
+      el("td", { class: "num" }, last ? shortDate(last) : "–"),
+      el("td", { class: "num" }, b.time_left ? `~${duration(b.time_left)}` : "–"),
+    ));
+  }
+
+  const dayRows = document.getElementById("day-rows");
+  for (const day of [...DATA.days].reverse()) {
+    dayRows.append(el("tr", {},
+      el("td", {}, longDate(parseDate(day.date))),
+      el("td", { class: "num" }, duration(day.seconds)),
+      el("td", {}, day.books.map(b => `${b.title} (${duration(b.seconds)})`).join(", ") || "–"),
+    ));
+  }
+
+  const last = DATA.last_import ? `${longDate(parseDate(DATA.last_import))} ${DATA.last_import.slice(11, 16)}` : "–";
+  document.getElementById("footer-text").textContent = T.footer(last);
+}
+
+function applyStaticText() {
+  document.documentElement.lang = LANG;
+  document.title = T.pageTitle;
+  for (const e of document.querySelectorAll("[data-text]")) e.textContent = T[e.dataset.text];
+}
+
+function renderCharts() { dailyChart(); calendar(); hourChart(); }
+
+applyStaticText();
+renderOverview();
+renderTables();
+renderCharts();
+let resizeTimer;
+addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(renderCharts, 120); });
+</script>
+</body>
+</html>

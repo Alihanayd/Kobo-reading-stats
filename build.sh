@@ -1,14 +1,14 @@
 #!/bin/sh
-# Kobo'ya kurulacak KoboRoot.tgz paketini üretir.
-#   1. Zig ve SQLite kaynak kodunu (yoksa) build/ altına indirir, imzalarını doğrular.
-#   2. SQLite komut satırı aracını Kobo'nun ARM işlemcisi için statik olarak derler.
-#   3. kobo/ altındaki dosyaları root sahipliğinde, macOS ek dosyaları olmadan paketler.
+# Builds the KoboRoot.tgz package that installs the logger on the Kobo.
+#   1. Downloads Zig and the SQLite source into build/ (if missing) and verifies their hashes.
+#   2. Builds the SQLite command-line tool statically for the Kobo's ARM processor.
+#   3. Packs the files under kobo/ owned by root, without macOS metadata files.
 set -eu
 
-KOK=$(cd "$(dirname "$0")" && pwd)
-B=$KOK/build
+ROOT=$(cd "$(dirname "$0")" && pwd)
+BUILD=$ROOT/build
 
-ZIG_SURUM=0.17.0
+ZIG_VERSION=0.17.0
 case "$(uname -s)-$(uname -m)" in
     Darwin-arm64)
         ZIG_PLATFORM=aarch64-macos
@@ -17,55 +17,55 @@ case "$(uname -s)-$(uname -m)" in
         ZIG_PLATFORM=x86_64-macos
         ZIG_SHA256=4f9a1c5269aa17ebda5e6d3c2b89d6cbf36f7d2b22a0306e9ab98f25f95529c6 ;;
     *)
-        echo "Bu betik macOS (Apple Silicon ya da Intel) için yazıldı." >&2
+        echo "This script is meant for macOS (Apple Silicon or Intel)." >&2
         exit 1 ;;
 esac
-SQLITE_DOSYA=sqlite-amalgamation-3540000
-SQLITE_URL=https://sqlite.org/2026/$SQLITE_DOSYA.zip
+SQLITE_NAME=sqlite-amalgamation-3540000
+SQLITE_URL=https://sqlite.org/2026/$SQLITE_NAME.zip
 SQLITE_SHA3=7b670a62fdfbd672b75fef004cb703c8a3e87d3a5cc7d675b4a08337004a2d93
 
-mkdir -p "$B"
+mkdir -p "$BUILD"
 
-ZIG=$B/zig-$ZIG_PLATFORM-$ZIG_SURUM/zig
-HEDEF=$KOK/kobo/usr/local/okumakaydi/sqlite3
+ZIG=$BUILD/zig-$ZIG_PLATFORM-$ZIG_VERSION/zig
+TARGET=$ROOT/kobo/usr/local/reading-stats/sqlite3
 
-# sqlite3 zaten derlenmişse derleyiciye ve kaynak koda gerek yok.
-if [ ! -f "$HEDEF" ]; then
+# Once sqlite3 is built, the compiler and the source aren't needed.
+if [ ! -f "$TARGET" ]; then
     if [ ! -x "$ZIG" ]; then
-        echo "Zig indiriliyor..."
-        curl -sSL -o "$B/zig.tar.xz" "https://ziglang.org/download/$ZIG_SURUM/zig-$ZIG_PLATFORM-$ZIG_SURUM.tar.xz"
-        echo "$ZIG_SHA256  $B/zig.tar.xz" | shasum -a 256 -c -
-        tar -xf "$B/zig.tar.xz" -C "$B"
-        rm "$B/zig.tar.xz"
+        echo "Downloading Zig..."
+        curl -sSL -o "$BUILD/zig.tar.xz" "https://ziglang.org/download/$ZIG_VERSION/zig-$ZIG_PLATFORM-$ZIG_VERSION.tar.xz"
+        echo "$ZIG_SHA256  $BUILD/zig.tar.xz" | shasum -a 256 -c -
+        tar -xf "$BUILD/zig.tar.xz" -C "$BUILD"
+        rm "$BUILD/zig.tar.xz"
     fi
 
-    if [ ! -f "$B/$SQLITE_DOSYA/sqlite3.c" ]; then
-        echo "SQLite indiriliyor..."
-        curl -sSL -o "$B/sqlite.zip" "$SQLITE_URL"
-        # sqlite.org SHA3-256 yayınlıyor.
-        [ "$(python3 -I -c 'import hashlib,sys; print(hashlib.sha3_256(open(sys.argv[1],"rb").read()).hexdigest())' "$B/sqlite.zip")" = "$SQLITE_SHA3" ]
-        unzip -q -o "$B/sqlite.zip" -d "$B"
-        rm "$B/sqlite.zip"
+    if [ ! -f "$BUILD/$SQLITE_NAME/sqlite3.c" ]; then
+        echo "Downloading SQLite..."
+        curl -sSL -o "$BUILD/sqlite.zip" "$SQLITE_URL"
+        # sqlite.org publishes SHA3-256 hashes.
+        [ "$(python3 -I -c 'import hashlib,sys; print(hashlib.sha3_256(open(sys.argv[1],"rb").read()).hexdigest())' "$BUILD/sqlite.zip")" = "$SQLITE_SHA3" ]
+        unzip -q -o "$BUILD/sqlite.zip" -d "$BUILD"
+        rm "$BUILD/sqlite.zip"
     fi
 
-    echo "sqlite3 Kobo (ARMv7) için derleniyor..."
+    echo "Building sqlite3 for the Kobo (ARMv7)..."
     "$ZIG" cc -target arm-linux-musleabihf -mcpu=cortex_a7 -static -Os -s \
         -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_DEFAULT_MEMSTATUS=0 -DHAVE_USLEEP=1 \
-        -o "$HEDEF" "$B/$SQLITE_DOSYA/shell.c" "$B/$SQLITE_DOSYA/sqlite3.c"
+        -o "$TARGET" "$BUILD/$SQLITE_NAME/shell.c" "$BUILD/$SQLITE_NAME/sqlite3.c"
 fi
 
-chmod 755 "$KOK"/kobo/usr/local/okumakaydi/*
-chmod 644 "$KOK"/kobo/etc/udev/rules.d/98-okumakaydi.rules
+chmod 755 "$ROOT"/kobo/usr/local/reading-stats/*
+chmod 644 "$ROOT"/kobo/etc/udev/rules.d/98-reading-stats.rules
 
-# Sadece kendi dosyalarımızı ve kendi klasörümüzü paketliyoruz; /etc, /usr gibi mevcut
-# klasörlerin izinlerine dokunmamak için onların kayıtlarını pakete koymuyoruz.
-COPYFILE_DISABLE=1 tar -c -z -n -f "$B/KoboRoot.tgz" -C "$KOK/kobo" \
+# Only our own files and our own folder go into the package. Existing folders such as /etc
+# and /usr are left out so their permissions on the device aren't touched.
+COPYFILE_DISABLE=1 tar -c -z -n -f "$BUILD/KoboRoot.tgz" -C "$ROOT/kobo" \
     --format ustar --uid 0 --gid 0 --uname root --gname root --no-mac-metadata --no-xattrs \
-    usr/local/okumakaydi/ \
-    usr/local/okumakaydi/sqlite3 \
-    usr/local/okumakaydi/baslat.sh \
-    usr/local/okumakaydi/okumakaydi.sh \
-    etc/udev/rules.d/98-okumakaydi.rules
+    usr/local/reading-stats/ \
+    usr/local/reading-stats/sqlite3 \
+    usr/local/reading-stats/start.sh \
+    usr/local/reading-stats/logger.sh \
+    etc/udev/rules.d/98-reading-stats.rules
 
-echo "Hazır: $B/KoboRoot.tgz"
-tar -tvzf "$B/KoboRoot.tgz"
+echo "Done: $BUILD/KoboRoot.tgz"
+tar -tvzf "$BUILD/KoboRoot.tgz"

@@ -1,7 +1,8 @@
 .DS_Store
-# Okuma verileri ve üretilen panel (kişisel)
-/veri/
-# İndirilen derleyici, SQLite kaynağı ve üretilen paket
+# Reading data and the generated dashboard (personal)
+/data/
+# Downloaded compiler, SQLite source and the built package
 /build/
-# build.sh tarafından derlenen ikili dosya
-/kobo/usr/local/okumakaydi/sqlite3
+# Binary built by build.sh
+/kobo/usr/local/reading-stats/sqlite3
+__pycache__/
