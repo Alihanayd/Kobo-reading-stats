@@ -85,7 +85,7 @@ macOS arka plandaki Python'un çıkarılabilir disklere erişmesine izin vermiyo
 ## Sorun giderme
 
 - **Panelde "kayıt betiği çalışmıyor" uyarısı var:** Kobo yazılım güncellemeleri betiği silebilir. `build/KoboRoot.tgz`'yi tekrar `.kobo/` klasörüne kopyalayıp Kobo'yu çıkar.
-- **Takınca bildirim gelmiyor:** `data/auto.log` dosyasına bak. "izin hatası" (İngilizcede "permission error") yazıyorsa Sistem Ayarları > Gizlilik ve Güvenlik > Dosyalar ve Klasörler'de Kobo Reading Stats için "Çıkarılabilir Birimler"i aç.
+- **Takınca bildirim gelmiyor:** `data/auto.log` dosyasına bak. "izin hatası" (İngilizcede "permission error") yazıyorsa Sistem Ayarları > Gizlilik ve Güvenlik > Dosyalar ve Klasörler'de Kobo Reading Stats için "Çıkarılabilir Birimler"i aç. Takınca `data/auto.log` dosyasına hiç yeni satır eklenmiyorsa `launchctl print gui/$(id -u)/io.github.alihanayd.kobo-reading-stats` komutunu çalıştırıp `runs` ve `last exit code` değerlerine bak. Ajan hiç çalışmamışsa ya da sürekli hata veriyorsa `mac/install.sh`'ı yeniden çalıştır; proje klasörünü taşıdıktan sonra da bu gerekir.
 - **Kobo'da kayıt tutulmuyor:** Kobo'yu tak, `.adds/reading-stats/logger.log` dosyasına bak. İçinde `started` yazan bir satır olmalı.
 - Elle çalıştırmak için: `python3 mac/kobo_stats.py` (Kobo takılıysa kayıtları alır, paneli açar) ya da `--dashboard` (sadece paneli üretir).
 

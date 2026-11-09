@@ -62,10 +62,8 @@ cat > "$PLIST" <<EOF
     <!-- Runs whenever any disk is mounted; the script exits right away if it isn't the Kobo. -->
     <key>StartOnMount</key>
     <true/>
-    <key>StandardOutPath</key>
-    <string>$ROOT/data/auto.log</string>
-    <key>StandardErrorPath</key>
-    <string>$ROOT/data/auto.log</string>
+    <!-- No StandardOutPath/StandardErrorPath: the app writes data/auto.log itself. When launchd
+         can't open a log file it set there, it gives up before starting anything (exit code 78). -->
 </dict>
 </plist>
 EOF

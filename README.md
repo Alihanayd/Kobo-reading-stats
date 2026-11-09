@@ -130,7 +130,7 @@ The logger writes these files to `.adds/reading-stats/` on the Kobo's storage:
 ## Troubleshooting
 
 - **The dashboard says the logger isn't running.** A Kobo firmware update may have removed it. Copy `build/KoboRoot.tgz` to `.kobo/` again and eject the Kobo.
-- **No notification when you plug in.** Check `data/auto.log`. If it mentions a permission error (`permission error`, or `izin hatası` in Turkish), open System Settings > Privacy & Security > Files & Folders and turn on Removable Volumes for Kobo Reading Stats.
+- **No notification when you plug in.** Check `data/auto.log`. If it mentions a permission error (`permission error`, or `izin hatası` in Turkish), open System Settings > Privacy & Security > Files & Folders and turn on Removable Volumes for Kobo Reading Stats. If `data/auto.log` gets no new lines at all when you plug in, run `launchctl print gui/$(id -u)/io.github.alihanayd.kobo-reading-stats` and check `runs` and `last exit code`. If the agent never ran or keeps failing, run `mac/install.sh` again; this is also needed after you move the project folder.
 - **Nothing is recorded on the Kobo.** Plug it in and look for `.adds/reading-stats/logger.log`. It should contain a line with `started`.
 
 ## Uninstalling
